@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Getter
 public class DetalharClienteDTO {
 
     private String nome;
@@ -17,7 +16,6 @@ public class DetalharClienteDTO {
     private String endereco;
     private String fone;
     private LocalDateTime datacriacao;
-    private List<ContasDTO> contas;
 
     public DetalharClienteDTO(ClienteModel clienteModel) {
         this.nome = clienteModel.getNome();
@@ -25,8 +23,6 @@ public class DetalharClienteDTO {
         this.fone = clienteModel.getFone();
         this.endereco = clienteModel.getEndereco();
         this.datacriacao = clienteModel.getDatacriacao();
-        this.contas = new ArrayList<>();
-        this.contas.addAll(clienteModel.getContas().stream().map(ContasDTO::new).collect(Collectors.toList()));
     }
 
 }

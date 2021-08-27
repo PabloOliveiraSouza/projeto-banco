@@ -2,6 +2,7 @@ package com.everis.projetobanco.model;
 
 import com.everis.projetobanco.controller.ContaController;
 import com.everis.projetobanco.controller.dto.TransferenciasModeldto;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.hibernate.validator.constraints.br.CPF;
 
 import javax.persistence.Entity;
@@ -17,8 +18,8 @@ public class TransferenciasModel {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     public Integer id;
-    @NotEmpty
-    public String cpf;
+
+    public Integer numeroConta;
     @NotNull
     public double valor;
     @NotNull
@@ -26,9 +27,9 @@ public class TransferenciasModel {
     @NotNull
     private double taxa;
 
-    public TransferenciasModel(Integer id, String cpf, double valor, TipoOperacaoEnum tipoOperacao, double taxa) {
+    public TransferenciasModel(Integer id, Integer numeroConta, double valor, TipoOperacaoEnum tipoOperacao, double taxa) {
         this.id = id;
-        this.cpf = cpf;
+        this.numeroConta = numeroConta;
         this.valor = valor;
         this.tipoOperacao = tipoOperacao;
         this.taxa = taxa;
@@ -45,12 +46,12 @@ public class TransferenciasModel {
         this.id = id;
     }
 
-    public String getCpf() {
-        return cpf;
+    public Integer getNumeroConta() {
+        return numeroConta;
     }
 
-    public void setCpf(String cpf) {
-        this.cpf = cpf;
+    public void setNumeroConta(Integer numeroConta) {
+        this.numeroConta = numeroConta;
     }
 
     public double getValor() {

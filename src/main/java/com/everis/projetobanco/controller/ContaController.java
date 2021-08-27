@@ -8,8 +8,10 @@ import com.everis.projetobanco.inter.impl.TransferenciaImpl;
 import com.everis.projetobanco.model.ContaModel;
 import com.everis.projetobanco.model.TipoOperacaoEnum;
 import com.everis.projetobanco.model.TransferenciasModel;
+import com.everis.projetobanco.repository.ClienteRepository;
 import com.everis.projetobanco.repository.ContaRepository;
 import com.everis.projetobanco.repository.TransacaoRepository;
+import com.fasterxml.jackson.databind.util.JSONPObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +19,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.validation.Valid;
 import java.net.URI;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
@@ -26,6 +29,8 @@ import java.util.concurrent.ExecutionException;
 public class ContaController extends TransferenciaImpl {
 
     @Autowired
+    private ClienteRepository repository1;
+    @Autowired
     private ContaRepository repository;
     @Autowired
     private TransacaoRepository repositorytr;
@@ -34,19 +39,23 @@ public class ContaController extends TransferenciaImpl {
     private TipoOperacaoEnum TipoSacar = TipoOperacaoEnum.Saque;
     private TipoOperacaoEnum TipoDeposito = TipoOperacaoEnum.Deposito;
 
-    @GetMapping(path = "/{cpf}")
-    public ResponseEntity<DetalharContaDTO> consultarCPF(@PathVariable String cpf) {
-        Optional<ContaModel> conta = repository.findByCpf(cpf);
+    @GetMapping(path = "/")
+    public ResponseEntity<?> consultarPorNC(@RequestParam Integer numeroConta) {
+        Optional<ContaModel> conta = repository.findByNumeroConta(numeroConta);
         if (conta.isPresent()) {
             return ResponseEntity.ok().body(new DetalharContaDTO(conta.get()));
         }
-        return ResponseEntity.notFound().build();
+        String json = "Conta não encontrada!";
+        return ResponseEntity.status(203).body(json);
     }
 
     @GetMapping
-    public List<ContaModel> consultarTodos() {
+    public List<?> consultarTodos() {
+        if (repository.findAll().isEmpty()) {
+            List<String> lista = Arrays.asList(new String[]{"Não existe nenhuma conta!"});
+            return lista;
+        }
         return repository.findAll();
-
     }
 
     @GetMapping("/list")
@@ -56,86 +65,114 @@ public class ContaController extends TransferenciaImpl {
 
     }
 
+    //AJUSTADO
     @PostMapping
-    public ResponseEntity<ContaModel> salvar(@Valid @RequestBody ContaModel contaModel, UriComponentsBuilder uriBuilder) {
-        //verificar se a conta já existe
-        //Optional<ContaModel> veri = repository.findBynCOnta(contaModel.getnConta());
-        Optional<ContaModel> veri = repository.findByCpf(contaModel.getCpf());
+    public ResponseEntity<?> salvar(@Valid @RequestBody ContaModel contaModel, UriComponentsBuilder uriBuilder) {
+        Optional<ContaModel> veri = repository.findByNumeroConta(contaModel.getNumeroConta());
         if (veri.isPresent()) {
-            return ResponseEntity.badRequest().body(contaModel);
+            String json = "Conta já Cadastrada com o numero de conta: " + contaModel.getNumeroConta();
+            return ResponseEntity.status(203).body(json);
         }
+        contaModel.setQtdsaques(0);
         repository.save(contaModel);
         URI uri = uriBuilder.path("/contas/{id}").buildAndExpand(contaModel.getId()).toUri();
         return ResponseEntity.created(uri).body(contaModel);
     }
 
-    @DeleteMapping(value = "{cpf}")
-    public ResponseEntity delete(@PathVariable("cpf") String cpf) {
-        Optional<ContaModel> contaModel = repository.findByCpf(cpf);
+    //AJUSTADO
+    @DeleteMapping
+    public ResponseEntity<?> delete(@RequestParam("numeroConta") Integer numeroConta) {
+        Optional<ContaModel> contaModel = repository.findByNumeroConta(numeroConta);
         if (contaModel.isPresent()) {
+            String json = "Cliente Deletado Com sucesso!";
             repository.delete(contaModel.get());
-            return ResponseEntity.ok().build();
+            return ResponseEntity.accepted().body(new String[]{json, "ID: " + contaModel.get().getId().toString() + ", Nº Conta: " + contaModel.get().getNumeroConta() + ", Agência: " + contaModel.get().getAgencia()});
         } else {
-            throw new RuntimeException("Conta não encontrado com o cpf " + cpf);
+            //verificar
+            String json = "{\"message: \"Conta não encontrado!\"}";
+            return ResponseEntity.badRequest().body(json);
         }
     }
 
-    @PutMapping("{cpf}")
-    public ResponseEntity<ContaModelDto> atualizar(@PathVariable("cpf") String cpf, @RequestBody @Valid ContaModelDto conta) {
-        Optional<ContaModel> busca = repository.findByCpf(cpf);
+
+    @PutMapping
+    public ResponseEntity<?> atualizar(@RequestBody @Valid ContaModelDto contadto) {
+        Optional<ContaModel> busca = repository.findByNumeroConta(contadto.getNumeroConta());
         if (busca.isPresent()) {
-            ContaModel contaModel = conta.atualizar(cpf, repository);
+            ContaModel contaModel = contadto.atualizar(contadto.getNumeroConta(), repository);
             return ResponseEntity.ok(new ContaModelDto(contaModel));
         }
-        return ResponseEntity.notFound().build();
+        String json = "{\"message: \"Conta não encontrado!\"}";
+        return ResponseEntity.badRequest().body(json);
     }
 
-    @GetMapping("/extrato/{cpf}")
-    public List<TransferenciasModel> ConsultaExtrato(@PathVariable("cpf") String cpf) {
-        return repositorytr.findAllByCpf(cpf);
+    //-----------------------------------------------------------------------------------------------------------------------//
+    //------------------TRANSAÇÕES-------------------------------//
+    @GetMapping("/extrato")
+    public List<TransferenciasModel> ConsultaExtrato(@RequestParam("numeroConta") Integer numeroConta) {
+        return repositorytr.findAllByNumeroConta(numeroConta);
     }
 
     @PostMapping("/operacoes/saque")
-    public ResponseEntity<TransferenciasModel> salvarTransacaoSaque(@RequestBody @Valid TransferenciasModel model, UriComponentsBuilder uriBuilder) throws ExecutionException, InterruptedException {
+    public ResponseEntity<?> salvarTransacaoSaque(@RequestBody @Valid TransferenciasModel model, UriComponentsBuilder uriBuilder) throws ExecutionException, InterruptedException {
         return validacaodesaque(model, uriBuilder);
     }
 
     @PostMapping("/operacoes/deposito")
-    public ResponseEntity<TransferenciasModel> salvarTransacaoDeposito(@RequestBody @Valid TransferenciasModel model, UriComponentsBuilder uriBuilder) {
-        if (model.getTipoOperacao().equals(TipoDeposito)) {
-            model.setTaxa(getTaxa());
-            repositorytr.save(model);
-            depositarConta(model);
-            URI uri = uriBuilder.path("/contas/{id}").buildAndExpand(model.getId()).toUri();
-            return ResponseEntity.created(uri).body(model);
+    public ResponseEntity<?> salvarTransacaoDeposito(@RequestBody @Valid TransferenciasModel model, UriComponentsBuilder uriBuilder) {
+        Optional<ContaModel> busca = repository.findByNumeroConta(model.getNumeroConta());
+        if (busca.isPresent()) {
+            if (model.getTipoOperacao().equals(TipoDeposito)) {
+                model.setTaxa(0.0);
+                repositorytr.save(model);
+                depositarConta(model);
+                URI uri = uriBuilder.path("/contas/{id}").buildAndExpand(model.getId()).toUri();
+                return ResponseEntity.created(uri).body(model);
+            }
+            return ResponseEntity.badRequest().body(model);
         }
-        return ResponseEntity.badRequest().body(model);
-
+        String json = "Conta " + model.getNumeroConta() + " não encontrada!";
+        return ResponseEntity.badRequest().body(json);
     }
 
     @PutMapping("/operacoes/transferir")
-    public ResponseEntity<TransferenciasModel> transferencias(@RequestBody @Valid TransferenciasModeldto model, UriComponentsBuilder uriBuilder, ContaController contaController) {
-        TransferenciasModel transacaoEntrada = new TransferenciasModel(model.getId(), model.getCpfEntrada(), model.getValor(), TipoOperacaoEnum.TransferenciaEntrada, getTaxa());
-        TransferenciasModel transacaoSaida = new TransferenciasModel(model.getId(), model.getCpfSaida(), model.getValor(), TipoOperacaoEnum.TransferenciaSaida, getTaxa());
-        transferirContas(transacaoEntrada);
-        transferirContasSaida(transacaoSaida);
-        repositorytr.save(transacaoEntrada);
-        repositorytr.save(transacaoSaida);
-        URI uri = uriBuilder.path("/contas/{id}").buildAndExpand(transacaoSaida.getId()).toUri();
-        return ResponseEntity.created(uri).body(transacaoSaida);
+    public ResponseEntity<?> transferencias(@RequestBody @Valid TransferenciasModeldto model, UriComponentsBuilder uriBuilder, ContaController contaController) {
+        Optional<ContaModel> buscaEntrada = repository.findByNumeroConta(model.getNumeroConta_Entrada());
+        Optional<ContaModel> buscaSaida = repository.findByNumeroConta(model.getNumeroConta_Saida());
+        if (buscaEntrada.isPresent() && buscaSaida.isPresent()) {
+            if (buscaSaida.get().getSaldoEmConta() >= model.getValor()) {
+                TransferenciasModel transacaoEntrada = new TransferenciasModel(model.getId(), model.getNumeroConta_Entrada(), model.getValor(), TipoOperacaoEnum.TransferenciaEntrada, getTaxa());
+                TransferenciasModel transacaoSaida = new TransferenciasModel(model.getId(), model.getNumeroConta_Saida(), model.getValor(), TipoOperacaoEnum.TransferenciaSaida, getTaxa());
+                transferirContas(transacaoEntrada);
+                transferirContasSaida(transacaoSaida);
+                repositorytr.save(transacaoEntrada);
+                repositorytr.save(transacaoSaida);
+                URI uri = uriBuilder.path("/contas/{id}").buildAndExpand(transacaoSaida.getId()).toUri();
+                return ResponseEntity.created(uri).body(new TransferenciasModel[]{transacaoEntrada, transacaoSaida});
+            }
+            String json = "Sem saldo suficiente na conta " + buscaSaida.get().getNumeroConta() + ", " + "do CPF " + buscaSaida.get().getCpf() + ", Saldo atual de: " + buscaSaida.get().getSaldoEmConta() + "!";
+            return ResponseEntity.badRequest().body(json);
+        }
+        String json = "Contas: " + model.getNumeroConta_Entrada() + " " + model.getNumeroConta_Saida() + " não encontradas!";
+        return ResponseEntity.badRequest().body(json);
     }
 
-    public ResponseEntity<TransferenciasModel> validacaodesaque(@RequestBody @Valid TransferenciasModel model, UriComponentsBuilder uriBuilder) throws ExecutionException, InterruptedException {
-        Optional<ContaModel> busca = repository.findByCpf(model.getCpf());
-        if (busca.get().getSaldo() <= model.getValor()) {
-            return ResponseEntity.badRequest().build();
+    public ResponseEntity<?> validacaodesaque(@RequestBody @Valid TransferenciasModel model, UriComponentsBuilder uriBuilder) throws ExecutionException, InterruptedException {
+        Optional<ContaModel> busca = repository.findByNumeroConta(model.getNumeroConta());
+       // Optional<ContaModel> busca1 = repository.findByNumeroConta(model.getNumeroConta());
+        if (busca.isPresent()) {
+            if (busca.get().getSaldoEmConta() <= model.getValor()) {
+                String json = "Você não tem Saldo suficiente";
+                return ResponseEntity.badRequest().body(json);
+            }
+            sacarConta(model);
+            URI uri = uriBuilder.path("/contas/{id}").buildAndExpand(model.getId()).toUri();
+            KafkaProducerSaques ks = new KafkaProducerSaques();
+            ks.EnviarDadosClienteSaque(model.getNumeroConta());
+            return ResponseEntity.created(uri).body(model);
         }
-        sacarConta(model);
-        model.setTaxa(getTaxa());
-        URI uri = uriBuilder.path("/contas/{id}").buildAndExpand(model.getId()).toUri();
-        KafkaProducerSaques ks = new KafkaProducerSaques();
-        ks.EnviarDadosClienteSaque(model.getCpf());
-        return ResponseEntity.created(uri).body(model);
+        String json = "Conta não encontrada!";
+        return ResponseEntity.badRequest().body(json);
     }
 
 

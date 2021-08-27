@@ -10,7 +10,7 @@ import java.util.Optional;
 
 @Repository
 public interface TransacaoRepository extends JpaRepository<TransferenciasModel, Integer> {
-    Optional<TransferenciasModel> findByCpf(String cpf);
+//    Optional<TransferenciasModel> findByCpf(String cpf);
 
-    List<TransferenciasModel> findAllByCpf(String cpf);
+    List<TransferenciasModel> findAllByNumeroConta(Integer cpf);
 }

@@ -13,6 +13,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import javax.persistence.criteria.CriteriaBuilder;
 import java.util.List;
 
 @RunWith(SpringRunner.class)
@@ -28,21 +29,21 @@ public class TransacaoRepositoryTest {
 
     @Test
     public void deveriaCarregarTransacoesAoBuscarPorCpf(){
-        String cpf = "46432677807";
+        Integer cpf = 46807;
         TransferenciasModel tr = new TransferenciasModel();
-        tr.setCpf("46432677807");
+        tr.setNumeroConta(12345);
         tr.setTipoOperacao(TipoOperacaoEnum.Deposito);
         tr.setValor(1000.0);
         em.persist(tr);
-        List<TransferenciasModel> busca = repository.findAllByCpf(cpf);
+        List<TransferenciasModel> busca = repository.findAllByNumeroConta(cpf);
         Assert.assertNotNull(busca);
         Assert.assertEquals(1,busca.size());
 
     }
     @Test
     public void naoDeveriaCarregarTransacoesCujaCpfNaoEstejaCadastrado(){
-        String cpf = "46432677807";
-        List<TransferenciasModel> busca = repository.findAllByCpf(cpf);
+        Integer cpf = 4643;
+        List<TransferenciasModel> busca = repository.findAllByNumeroConta(cpf);
         Assert.assertNotNull(busca.isEmpty());
     }
 

@@ -8,6 +8,7 @@ import org.hibernate.validator.constraints.br.CPF;
 
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
 @Getter
@@ -15,18 +16,16 @@ import javax.validation.constraints.NotNull;
 public class TransferenciasModeldto {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     public Integer Id;
-    @CPF
-    public String cpfEntrada;
-    @CPF
-    public String cpfSaida;
-    @NotNull
+    public Integer numeroConta_Entrada;
+    public Integer numeroConta_Saida;
     public double valor;
     public TipoOperacaoEnum tipo;
 
-    public TransferenciasModeldto(Integer id, String cpfEntrada, String cpfSaida, double valor, TipoOperacaoEnum tipo) {
+
+    public TransferenciasModeldto(Integer id, Integer numeroConta_Entrada, Integer numeroConta_Saida, double valor, TipoOperacaoEnum tipo) {
         Id = id;
-        this.cpfEntrada = cpfEntrada;
-        this.cpfSaida = cpfSaida;
+        this.numeroConta_Entrada = numeroConta_Entrada;
+        this.numeroConta_Saida = numeroConta_Saida;
         this.valor = valor;
         this.tipo = tipo;
     }

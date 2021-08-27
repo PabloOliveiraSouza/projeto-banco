@@ -14,14 +14,12 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Getter
-@Setter
 public class ContaModelDto {
 
-    public String nome;
-    public Integer nConta;
-    public Integer dConta;
+    public Integer numeroConta;
+    public Integer digitoConta;
     public String agencia;
-    public Double Saldo;
+    public Double saldoEmConta;
     public String cpf;
     public TipoContaEnum tipoConta;
 
@@ -29,12 +27,10 @@ public class ContaModelDto {
         //this.nome = contaModel.getCliente().getNome();
         this.agencia = contaModel.getAgencia();
         this.cpf = contaModel.getCpf();
-        this.dConta = contaModel.getdConta();
-        this.nConta = contaModel.getnConta();
-        this.Saldo = contaModel.getSaldo();
+        this.digitoConta = contaModel.getDigitoConta();
+        this.numeroConta = contaModel.getNumeroConta();
+        this.saldoEmConta = contaModel.getSaldoEmConta();
         this.tipoConta = contaModel.getTipoConta();
-
-
     }
 
     public ContaModelDto() {
@@ -44,16 +40,19 @@ public class ContaModelDto {
         return contaModels.stream().map(ContaModelDto::new).collect(Collectors.toList());
     }
 
-    public ContaModel atualizar(String cpf, ContaRepository contaRepository) {
-        Optional<ContaModel> contaModel = contaRepository.findByCpf(cpf);
+    public ContaModel atualizar(Integer numeroConta, ContaRepository contaRepository) {
+        Optional<ContaModel> contaModel = contaRepository.findByNumeroConta(numeroConta);
         contaModel.map(alter -> {
             alter.setAgencia(this.getAgencia());
             alter.setCpf(this.getCpf());
-            alter.setnConta(this.getNConta());
-            alter.setdConta(this.getDConta());
+            alter.setNumeroConta(this.getNumeroConta());
+            alter.setDigitoConta(this.getDigitoConta());
+            alter.setTipoConta(this.getTipoConta());
             ContaModel updated = contaRepository.save(alter);
             return ResponseEntity.ok().body(updated);
         });
-        return null;
+        return contaModel.get();
     }
+
+
 }

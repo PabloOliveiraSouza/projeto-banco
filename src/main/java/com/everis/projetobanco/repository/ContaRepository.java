@@ -10,6 +10,6 @@ import java.util.Optional;
 
 @Repository
 public interface ContaRepository extends JpaRepository<ContaModel, Integer> {
-    Optional<ContaModel> findByCpf(String cpf);
-    //Optional<ContaModel> findBynCOnta(Integer nConta);
+    //Optional<ContaModel> findByCpf(String cpf);
+    Optional<ContaModel> findByNumeroConta(Integer numeroConta);
 }

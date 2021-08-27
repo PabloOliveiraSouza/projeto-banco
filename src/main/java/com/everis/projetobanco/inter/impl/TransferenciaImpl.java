@@ -13,15 +13,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
-
-
 @Setter
 @Getter
 @RestController
 public class TransferenciaImpl implements TransferenciasInterface {
 
     TipoContaEnum tipoconta;
-    Double taxa = 0.0;
+    Double taxa  =0.0;
     Integer qtdsaques = 0;
 
     @Autowired
@@ -31,20 +29,20 @@ public class TransferenciaImpl implements TransferenciasInterface {
 
     @Override
     public Optional<ResponseEntity<ContaModel>> sacarConta(@RequestBody TransferenciasModel model) {
-        reconhecerTipoConta(model.getCpf());
-        Optional<ContaModel> conta = repository.findByCpf(model.getCpf());
+        reconhecerTipoConta(model.getNumeroConta());
+        Optional<ContaModel> conta = repository.findByNumeroConta(model.getNumeroConta());
         return conta.map(record -> {
             if (record.getQtdsaques() > getQtdsaques()) {
-                record.setSaldo(record.getSaldo() - model.getValor() - getTaxa());
+                record.setSaldoEmConta(record.getSaldoEmConta() - model.getValor() - getTaxa());
                 ContaModel updated = repository.save(record);
                 model.setTaxa(getTaxa());
                 repositorytr.save(model);
                 return ResponseEntity.ok().body(updated);
 
             } else {
-                record.setSaldo(record.getSaldo() - model.getValor());
+                record.setSaldoEmConta(record.getSaldoEmConta() - model.getValor());
                 ContaModel updated = repository.save(record);
-                model.setTaxa(getTaxa());
+                model.setTaxa(0.0);
                 repositorytr.save(model);
                 return ResponseEntity.ok().body(updated);
 
@@ -54,9 +52,9 @@ public class TransferenciaImpl implements TransferenciasInterface {
 
     @Override
     public Optional<ResponseEntity<ContaModel>> depositarConta(@RequestBody TransferenciasModel model) {
-        Optional<ContaModel> conta = repository.findByCpf(model.getCpf());
+        Optional<ContaModel> conta = repository.findByNumeroConta(model.getNumeroConta());
         conta.map(record -> {
-            record.setSaldo(record.getSaldo() + model.getValor());
+            record.setSaldoEmConta(record.getSaldoEmConta() + model.getValor());
             ContaModel updated = repository.save(record);
             return ResponseEntity.ok().body(updated);
         });
@@ -67,9 +65,9 @@ public class TransferenciaImpl implements TransferenciasInterface {
 
     @Override
     public Optional<ResponseEntity<ContaModel>> transferirContas(@RequestBody TransferenciasModel model) {
-        Optional<ContaModel> contaEntrada = repository.findByCpf(model.getCpf());
+        Optional<ContaModel> contaEntrada = repository.findByNumeroConta(model.getNumeroConta());
         contaEntrada.map(record -> {
-            record.setSaldo(record.getSaldo() + model.getValor());
+            record.setSaldoEmConta(record.getSaldoEmConta() + model.getValor());
             ContaModel updated = repository.save(record);
             return ResponseEntity.ok().body(updated);
         });
@@ -77,9 +75,9 @@ public class TransferenciaImpl implements TransferenciasInterface {
     }
 
     public Optional<ResponseEntity<ContaModel>> transferirContasSaida(@RequestBody TransferenciasModel mode) {
-        Optional<ContaModel> contaSaida = repository.findByCpf(mode.getCpf());
+        Optional<ContaModel> contaSaida = repository.findByNumeroConta(mode.getNumeroConta());
         contaSaida.map(record -> {
-            record.setSaldo(record.getSaldo() - mode.getValor());
+            record.setSaldoEmConta(record.getSaldoEmConta() - mode.getValor());
             ContaModel update = repository.save(record);
             return ResponseEntity.ok().body(update);
         });
@@ -92,8 +90,8 @@ public class TransferenciaImpl implements TransferenciasInterface {
     }
 
     @Override
-    public String reconhecerTipoConta(String cpf) {
-        Optional<ContaModel> conta = repository.findByCpf(cpf);
+    public String reconhecerTipoConta(Integer numeroConta) {
+        Optional<ContaModel> conta = repository.findByNumeroConta(numeroConta);
         conta.map(map -> {
             setTipoconta(map.getTipoConta());
             setTaxa(tipoconta.getTaxa());

@@ -28,25 +28,25 @@ public class ContaRepositoryTest {
 
     @Test
     public void deveriaCarregarContaAoBuscarPorCpf(){
-        String cpf = "46432677807";
+        Integer nconta = 643267;
         ContaModel conta = new ContaModel();
         conta.setAgencia("3333");
         conta.setCpf("46432677807");
-        conta.setSaldo(1200.0);
+        conta.setSaldoEmConta(1200.0);
         conta.setTipoConta(TipoContaEnum.FISICA);
         conta.setQtdsaques(0);
-        conta.setdConta(4);
-        conta.setnConta(1234567);
+        conta.setDigitoConta(4);
+        conta.setNumeroConta(1234567);
         em.persist(conta);
-        Optional <ContaModel> busca = repository.findByCpf(cpf);
+        Optional <ContaModel> busca = repository.findByNumeroConta(nconta);
         Assert.assertNotNull(busca);
-        Assert.assertEquals(cpf,busca.get().getCpf());
+        Assert.assertEquals(nconta,busca.get().getCpf());
 
     }
     @Test
     public void naoDeveriaCarregarContaCujaCpfNaoEstejaCadastrado(){
-        String cpf = "46432677807";
-        Optional <ContaModel> busca = repository.findByCpf(cpf);
+        Integer nconta = 643267;
+        Optional <ContaModel> busca = repository.findByNumeroConta(nconta);
         Assert.assertNotNull(busca.isEmpty());
     }
 

@@ -38,7 +38,7 @@ public class ClienteRepositoryTest {
         cliente.setCpf("46432677807");
         cliente.setEndereco("Rua Distrito Federal 108");
         cliente.setDatacriacao(data);
-        cliente.setContas(list);
+        //cliente.setContas(list);
         em.persist(cliente);
 
         Optional <ClienteModel> busca = repository.findByCpf(cpf);

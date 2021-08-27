@@ -2,6 +2,7 @@ package com.everis.projetobanco.model;
 
 import javassist.expr.NewArray;
 import lombok.*;
+import org.hibernate.annotations.Cascade;
 import org.hibernate.validator.constraints.br.CPF;
 
 import javax.persistence.*;
@@ -41,8 +42,8 @@ public class ClienteModel {
     private String fone;
     @Column(length = 50)
     private LocalDateTime datacriacao = LocalDateTime.now();
-    @OneToMany(mappedBy = "cpf")
-    private List<ContaModel> contas;
+    //@OneToMany(mappedBy = "cpf", orphanRemoval = true, cascade = CascadeType.ALL)
+    //private List<ContaModel> contas;
 
 
 }
