@@ -1,5 +1,6 @@
 package com.everis.projetobanco.model;
 
+import com.everis.projetobanco.controller.dto.ClienteModelDto;
 import javassist.expr.NewArray;
 import lombok.*;
 import org.hibernate.annotations.Cascade;
@@ -42,6 +43,7 @@ public class ClienteModel {
     private String fone;
     @Column(length = 50)
     private LocalDateTime datacriacao = LocalDateTime.now();
+
     //@OneToMany(mappedBy = "cpf", orphanRemoval = true, cascade = CascadeType.ALL)
     //private List<ContaModel> contas;
 

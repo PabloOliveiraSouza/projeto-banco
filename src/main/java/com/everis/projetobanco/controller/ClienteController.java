@@ -3,10 +3,13 @@ package com.everis.projetobanco.controller;
 import com.everis.projetobanco.controller.dto.ClienteModelDto;
 import com.everis.projetobanco.controller.dto.DetalharClienteDTO;
 import com.everis.projetobanco.controller.dto.DetalharContaDTO;
+import com.everis.projetobanco.inter.ExceptionJson;
+import com.everis.projetobanco.inter.impl.ExceptionImpl;
 import com.everis.projetobanco.model.ClienteModel;
 import com.everis.projetobanco.model.ContaModel;
 import com.everis.projetobanco.repository.ClienteRepository;
 import com.fasterxml.jackson.databind.util.JSONPObject;
+import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -31,14 +34,17 @@ public class ClienteController {
         if (cliente.isPresent()) {
             return ResponseEntity.ok().body(cliente);
         }
-        String json = "Cliente não encontrada!";
-        return ResponseEntity.status(203).body(json);
+        ExceptionJson exceptionJson = new ExceptionImpl();
+        return exceptionJson.clienteNEncontrada(cpf);
     }
 
     @GetMapping
     public List<?> consultarTodos() {
         if (repository.findAll().isEmpty()) {
-            List<String> lista = Arrays.asList(new String[]{"Não existe nenhum cliente!"});
+            JSONObject json = new JSONObject();
+            json.put("message","Essa lista está vazia");
+            json.put("quantidade",0);
+            List<JSONObject> lista = Arrays.asList(new JSONObject[]{json});
             return lista;
         }
         return repository.findAll();
@@ -55,12 +61,13 @@ public class ClienteController {
     public ResponseEntity<?> salvar(@RequestBody @Valid ClienteModel clienteModel, UriComponentsBuilder uriBuilder) {
         Optional<ClienteModel> veri = repository.findByCpf(clienteModel.getCpf());
         if (veri.isPresent()) {
-            String json = "{\"message: \"Cpf já cadastrado.\"}";
-            return ResponseEntity.status(203).body(json);
+            ExceptionJson exceptionJson = new ExceptionImpl();
+            return exceptionJson.clientePresente(clienteModel);
         }
         repository.save(clienteModel);
         URI uri = uriBuilder.path("/clientes/{id}").buildAndExpand(clienteModel.getId()).toUri();
-        return ResponseEntity.created(uri).body(clienteModel);
+        ExceptionJson exceptionJson = new ExceptionImpl();
+        return exceptionJson.clienteSalvo(clienteModel,uri);
     }
 
     //ajustado
@@ -68,12 +75,12 @@ public class ClienteController {
     public ResponseEntity<?> delete(@RequestParam("cpf") String cpf) {
         Optional<ClienteModel> cliente = repository.findByCpf(cpf);
         if (cliente.isPresent()) {
-            String json = "Cliente Deletado Com sucesso!";
             repository.delete(cliente.get());
-            return ResponseEntity.accepted().body(new String[]{json, "ID: " + cliente.get().getId().toString() + ", Nome: " + cliente.get().getNome() + ", CPF: " + cliente.get().getCpf()});
+            ExceptionJson exceptionJson = new ExceptionImpl();
+            return exceptionJson.deleteClienteEfetuado(cliente.get().getId(), cliente.get().getNome(), cliente.get().getCpf());
         } else {
-            String json = "{\"message: \"Cliente não encontrado!\"}";
-            return ResponseEntity.badRequest().body(json);
+            ExceptionJson exceptionJson = new ExceptionImpl();
+            return exceptionJson.clienteNEncontrada(cpf);
         }
     }
 
@@ -86,8 +93,8 @@ public class ClienteController {
             ClienteModel clienteModel = cliente.atualizar(cpf, repository);
             return ResponseEntity.ok(new ClienteModelDto(clienteModel));
         }
-        String json = "{\"message: \"Cliente não encontrado!\"}";
-        return ResponseEntity.badRequest().body(json);
+        ExceptionJson exceptionJson = new ExceptionImpl();
+        return exceptionJson.clienteNEncontrada(cpf);
     }
 
 
