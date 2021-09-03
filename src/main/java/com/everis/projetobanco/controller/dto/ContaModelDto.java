@@ -7,8 +7,11 @@ import com.everis.projetobanco.repository.ClienteRepository;
 import com.everis.projetobanco.repository.ContaRepository;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.validator.constraints.br.CPF;
 import org.springframework.http.ResponseEntity;
 
+import javax.validation.constraints.Max;
+import javax.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -17,9 +20,12 @@ import java.util.stream.Collectors;
 public class ContaModelDto {
 
     public Integer numeroConta;
+    @NotNull
+    @Max(value = 99)
     public Integer digitoConta;
     public String agencia;
     public Double saldoEmConta;
+    @CPF
     public String cpf;
     public TipoContaEnum tipoConta;
 

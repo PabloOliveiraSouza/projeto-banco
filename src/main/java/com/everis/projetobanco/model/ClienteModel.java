@@ -1,9 +1,6 @@
 package com.everis.projetobanco.model;
 
-import com.everis.projetobanco.controller.dto.ClienteModelDto;
-import javassist.expr.NewArray;
 import lombok.*;
-import org.hibernate.annotations.Cascade;
 import org.hibernate.validator.constraints.br.CPF;
 
 import javax.persistence.*;
@@ -11,8 +8,6 @@ import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Setter
 @Getter

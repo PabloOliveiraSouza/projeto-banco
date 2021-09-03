@@ -7,6 +7,7 @@ import com.everis.projetobanco.controller.dto.TransferenciasModeldto;
 import com.everis.projetobanco.inter.ExceptionJson;
 import com.everis.projetobanco.inter.impl.ExceptionImpl;
 import com.everis.projetobanco.inter.impl.TransferenciaImpl;
+import com.everis.projetobanco.model.ClienteModel;
 import com.everis.projetobanco.model.ContaModel;
 import com.everis.projetobanco.model.TipoOperacaoEnum;
 import com.everis.projetobanco.model.TransferenciasModel;
@@ -36,7 +37,6 @@ public class ContaController extends TransferenciaImpl {
     @Autowired
     private TransacaoRepository repositorytr;
 
-
     private TipoOperacaoEnum TipoSacar = TipoOperacaoEnum.Saque;
     private TipoOperacaoEnum TipoDeposito = TipoOperacaoEnum.Deposito;
 
@@ -63,22 +63,24 @@ public class ContaController extends TransferenciaImpl {
     public List<ContaModelDto> lista() {
         List<ContaModel> contas = repository.findAll();
         return ContaModelDto.converter(contas);
-
     }
 
-    //AJUSTADO
     @PostMapping
     public ResponseEntity<?> salvar(@Valid @RequestBody ContaModel contaModel, UriComponentsBuilder uriBuilder) {
         Optional<ContaModel> veri = repository.findByNumeroConta(contaModel.getNumeroConta());
+        Optional<ClienteModel> vericliente = repository1.findByCpf(contaModel.getCpf());
         if (veri.isPresent()) {
             ExceptionJson exception = new ExceptionImpl();
             return exception.contaPresente(contaModel);
+        } else if (vericliente.isPresent()) {
+            contaModel.setQtdsaques(0);
+            repository.save(contaModel);
+            URI uri = uriBuilder.path("/contas/{id}").buildAndExpand(contaModel.getId()).toUri();
+            ExceptionJson exception = new ExceptionImpl();
+            return exception.contaSalvo(contaModel, uri);
         }
-        contaModel.setQtdsaques(0);
-        repository.save(contaModel);
-        URI uri = uriBuilder.path("/contas/{id}").buildAndExpand(contaModel.getId()).toUri();
         ExceptionJson exception = new ExceptionImpl();
-        return exception.contaSalvo(contaModel,uri);
+        return exception.clienteNEncontrada(contaModel.getCpf());
     }
 
     @DeleteMapping
@@ -87,13 +89,12 @@ public class ContaController extends TransferenciaImpl {
         if (contaModel.isPresent()) {
             repository.delete(contaModel.get());
             ExceptionJson exception = new ExceptionImpl();
-            return exception.deleteContaEfetuado(contaModel.get().getId(),contaModel.get().getNumeroConta(),contaModel.get().getAgencia());
+            return exception.deleteContaEfetuado(contaModel.get().getId(), contaModel.get().getNumeroConta(), contaModel.get().getAgencia());
         } else {
             ExceptionJson exception = new ExceptionImpl();
             return exception.contaNEncontrada(numeroConta);
         }
     }
-
 
     @PutMapping
     public ResponseEntity<?> atualizar(@RequestBody @Valid ContaModelDto contadto) {
@@ -106,8 +107,7 @@ public class ContaController extends TransferenciaImpl {
         return exception.contaNEncontrada(contadto.getNumeroConta());
     }
 
-    //-----------------------------------------------------------------------------------------------------------------------//
-    //------------------TRANSAÇÕES-------------------------------//
+    //----------------------------------------------------------------------------TRANSAÇÕES----------------------------------------------------------------------------//
     @GetMapping("/extrato")
     public List<TransferenciasModel> ConsultaExtrato(@RequestParam("numeroConta") Integer numeroConta) {
         return repositorytr.findAllByNumeroConta(numeroConta);
@@ -128,7 +128,7 @@ public class ContaController extends TransferenciaImpl {
                 depositarConta(model);
                 URI uri = uriBuilder.path("/contas/{id}").buildAndExpand(model.getId()).toUri();
                 ExceptionJson exception = new ExceptionImpl();
-                return exception.depositoEfetuado(model,uri);
+                return exception.depositoEfetuado(model, uri);
             }
         }
         ExceptionJson exception = new ExceptionImpl();
@@ -149,19 +149,18 @@ public class ContaController extends TransferenciaImpl {
                 repositorytr.save(transacaoSaida);
                 URI uri = uriBuilder.path("/contas/{id}").buildAndExpand(transacaoSaida.getId()).toUri();
                 ExceptionJson exception = new ExceptionImpl();
-                return exception.TranferenciaEfetuado(transacaoEntrada,transacaoSaida,uri);
+                return exception.TranferenciaEfetuado(transacaoEntrada, transacaoSaida, uri);
             }
             ExceptionJson exception = new ExceptionImpl();
             return exception.erroSemSaldo(buscaSaida.get().getSaldoEmConta(), buscaSaida.get().getNumeroConta());
         }
         ExceptionJson exception = new ExceptionImpl();
-        return exception.contasNEncontrada(model.getNumeroConta_Saida(), model.getNumeroConta_Entrada());
+        return exception.contasNEncontrada(model.getNumeroConta_Saida(), model.getNumeroConta_Entrada(),repository);
     }
 
 
     public ResponseEntity<?> validacaodesaque(@RequestBody @Valid TransferenciasModel model, UriComponentsBuilder uriBuilder) throws ExecutionException, InterruptedException {
         Optional<ContaModel> busca = repository.findByNumeroConta(model.getNumeroConta());
-        // Optional<ContaModel> busca1 = repository.findByNumeroConta(model.getNumeroConta());
         if (busca.isPresent()) {
             if (busca.get().getSaldoEmConta() <= model.getValor()) {
                 ExceptionImpl exception = new ExceptionImpl();

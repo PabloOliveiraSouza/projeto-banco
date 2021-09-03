@@ -10,16 +10,18 @@ import lombok.Getter;
 import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Optional;
+
 @Setter
 @Getter
 @RestController
 public class TransferenciaImpl implements TransferenciasInterface {
 
     TipoContaEnum tipoconta;
-    Double taxa  =0.0;
+    Double taxa = 0.0;
     Integer qtdsaques = 0;
 
     @Autowired

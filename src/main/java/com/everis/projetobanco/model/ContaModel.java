@@ -7,9 +7,7 @@ import lombok.Setter;
 import org.hibernate.validator.constraints.br.CPF;
 
 import javax.persistence.*;
-import javax.persistence.Entity;
 import javax.validation.constraints.Max;
-import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 @Getter
 @Setter
